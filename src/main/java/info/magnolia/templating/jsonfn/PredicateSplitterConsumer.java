@@ -42,8 +42,7 @@ import java.util.function.Predicate;
  * @param <T>
  *            Type of consumed data.
  */
-public class PredicateSplitterConsumer<T> implements Consumer<T>
-{
+public class PredicateSplitterConsumer<T> implements Consumer<T> {
     private Predicate<T> predicate;
     private Consumer<T> positive;
     private Consumer<T> negative;
@@ -53,8 +52,7 @@ public class PredicateSplitterConsumer<T> implements Consumer<T>
         this(predicate, positive, negative, null);
     }
 
-    public PredicateSplitterConsumer(Predicate<T> predicate, Consumer<T> positive, Consumer<T> negative, Consumer<T> both)
-    {
+    public PredicateSplitterConsumer(Predicate<T> predicate, Consumer<T> positive, Consumer<T> negative, Consumer<T> both) {
         this.predicate = predicate;
         this.positive = positive;
         this.negative = negative;
@@ -62,8 +60,7 @@ public class PredicateSplitterConsumer<T> implements Consumer<T>
     }
 
     @Override
-    public void accept(T t)
-    {
+    public void accept(T t) {
         if (predicate.test(t)) {
             positive.accept(t);
         } else {

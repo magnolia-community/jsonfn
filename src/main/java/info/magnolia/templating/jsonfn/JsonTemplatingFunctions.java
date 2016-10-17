@@ -33,9 +33,13 @@
  */
 package info.magnolia.templating.jsonfn;
 
-import info.magnolia.context.MgnlContext;
+import info.magnolia.context.Context;
 import info.magnolia.jcr.util.ContentMap;
+import info.magnolia.objectfactory.Components;
 
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
@@ -45,21 +49,44 @@ import org.slf4j.LoggerFactory;
 /**
  * Templating Functions to expose json builder.
  */
+@Singleton
 public class JsonTemplatingFunctions {
 
     private static final Logger log = LoggerFactory.getLogger(JsonTemplatingFunctions.class);
 
+    private final Provider<Context> contextProvider;
+
+    @Inject
+    public JsonTemplatingFunctions(final Provider<Context> contextProvider) {
+        this.contextProvider = contextProvider;
+    }
+
+    /**
+     * Old deprecated constructor.
+     *
+     * @deprecated since 1.0.7, use {@link #JsonTemplatingFunctions(Provider<Context>)} instead.
+     */
+    @Deprecated
+    public JsonTemplatingFunctions() {
+        this(new Provider<Context>() {
+            @Override
+            public Context get() {
+                return Components.getComponent(Context.class);
+            }
+        });
+    }
+
     /**
      * Will operate on passed in node.
      */
-    public static JsonBuilder from(ContentMap content) {
+    public JsonBuilder from(ContentMap content) {
         return from(content.getJCRNode());
     }
 
     /**
      * Will operate on passed in node.
      */
-    public static JsonBuilder from(Node node) {
+    public JsonBuilder from(Node node) {
         JsonBuilder foo = new JsonBuilder();
         foo.setNode(node);
         return foo;
@@ -68,9 +95,9 @@ public class JsonTemplatingFunctions {
     /**
      * Will skip root node of the workspace, but iterate over all children of it instead.
      */
-    public static JsonBuilder fromChildNodesOf(String workspace) {
+    public JsonBuilder fromChildNodesOf(String workspace) {
         try {
-            return fromChildNodesOf(MgnlContext.getJCRSession(workspace).getRootNode());
+            return fromChildNodesOf(contextProvider.get().getJCRSession(workspace).getRootNode());
         } catch (RepositoryException e) {
             // ignore - if root node is not accessible, repo is broken or user is denied access. Either way, there's nothing to show for it and no reason to spit out extra stuff in log files, this will not escape anyones notice.
             log.debug("Repository could not be accessed due:" + e.getMessage(), e);
@@ -81,14 +108,14 @@ public class JsonTemplatingFunctions {
     /**
      * Will skip current node, but iterate over all children of it instead.
      */
-    public static JsonBuilder fromChildNodesOf(ContentMap content) {
+    public JsonBuilder fromChildNodesOf(ContentMap content) {
         return fromChildNodesOf(content.getJCRNode());
     }
 
     /**
      * Will skip current node, but iterate over all children of it instead.
      */
-    public static JsonBuilder fromChildNodesOf(Node node) {
+    public JsonBuilder fromChildNodesOf(Node node) {
         JsonBuilder foo = new JsonBuilder();
         foo.setNode(node);
         foo.setChildrenOnly(true);
@@ -98,14 +125,14 @@ public class JsonTemplatingFunctions {
     /**
      * Will operate on passed in node and append output to provided json.
      */
-    public static JsonBuilder appendFrom(String json, ContentMap content) {
+    public JsonBuilder appendFrom(String json, ContentMap content) {
         return appendFrom(json, content.getJCRNode());
     }
 
     /**
      * Will operate on passed in node.
      */
-    public static JsonBuilder appendFrom(String json, Node node) {
+    public JsonBuilder appendFrom(String json, Node node) {
         JsonBuilder foo = new JsonBuilder();
         foo.setNode(node);
         foo.setJson(json);
