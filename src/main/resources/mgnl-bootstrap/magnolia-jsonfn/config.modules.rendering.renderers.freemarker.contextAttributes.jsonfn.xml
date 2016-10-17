@@ -4,10 +4,10 @@
     <sv:value>mgnl:contentNode</sv:value>
   </sv:property>
   <sv:property sv:name="jcr:uuid" sv:type="String">
-    <sv:value>8cad86b2-8a3d-429a-bacb-0fe56069d293</sv:value>
+    <sv:value>8cad86b2-8a3d-429a-bacb-0fe56069d294</sv:value>
   </sv:property>
   <sv:property sv:name="componentClass" sv:type="String">
-    <sv:value>com.neatresults.mgnltweaks.json.JsonTemplatingFunctions</sv:value>
+    <sv:value>info.magnolia.templating.jsonfn.JsonTemplatingFunctions</sv:value>
   </sv:property>
   <sv:property sv:name="jcr:createdBy" sv:type="String">
     <sv:value>admin</sv:value>

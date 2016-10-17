@@ -1,29 +1,37 @@
 /**
+ * This file Copyright (c) 2016 Magnolia International
+ * Ltd.  (http://www.magnolia-cms.com). All rights reserved.
  *
- * Copyright 2015 by Jan Haderka <jan.haderka@neatresults.com>
  *
- * This file is part of neat-tweaks module.
+ * This file is dual-licensed under both the Magnolia
+ * Network Agreement and the GNU General Public License.
+ * You may elect to use one or the other of these licenses.
  *
- * Neat-tweaks is free software: you can redistribute
- * it and/or modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation, either
- * version 3 of the License, or (at your option) any later version.
+ * This file is distributed in the hope that it will be
+ * useful, but AS-IS and WITHOUT ANY WARRANTY; without even the
+ * implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE, TITLE, or NONINFRINGEMENT.
+ * Redistribution, except as permitted by whichever of the GPL
+ * or MNA you select, is prohibited.
  *
- * Neat-tweaks is distributed in the hope that it will
- * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * 1. For the GPL license (GPL), you can redistribute and/or
+ * modify this file under the terms of the GNU General
+ * Public License, Version 3, as published by the Free Software
+ * Foundation.  You should have received a copy of the GNU
+ * General Public License, Version 3 along with this program;
+ * if not, write to the Free Software Foundation, Inc., 51
+ * Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * You should have received a copy of the GNU General Public License
- * along with neat-tweaks.  If not, see <http://www.gnu.org/licenses/>.
+ * 2. For the Magnolia Network Agreement (MNA), this file
+ * and the accompanying materials are made available under the
+ * terms of the MNA which accompanies this distribution, and
+ * is available at http://www.magnolia-cms.com/mna.html
  *
- * @license GPL-3.0 <http://www.gnu.org/licenses/gpl.txt>
- *
- * Should you require distribution under alternative license in order to
- * use neat-tweaks commercially, please contact owner at the address above.
+ * Any modifications to this file must keep this entire header
+ * intact.
  *
  */
-package com.neatresults.mgnltweaks.json;
+package info.magnolia.templating.jsonfn;
 
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
