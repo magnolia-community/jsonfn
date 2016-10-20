@@ -23,5 +23,9 @@
       <name>rendering</name>
       <version>${magnoliaVersion}/*</version>
     </dependency>
+    <dependency>
+      <name>dam-templating</name>
+      <version>${magnoliaDamVersion}/*</version>
+    </dependency>
   </dependencies>
 </module>

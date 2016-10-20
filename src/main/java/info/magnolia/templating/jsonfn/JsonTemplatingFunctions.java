@@ -34,6 +34,7 @@
 package info.magnolia.templating.jsonfn;
 
 import info.magnolia.context.Context;
+import info.magnolia.dam.templating.functions.DamTemplatingFunctions;
 import info.magnolia.jcr.util.ContentMap;
 import info.magnolia.objectfactory.Components;
 
@@ -55,25 +56,20 @@ public class JsonTemplatingFunctions {
     private static final Logger log = LoggerFactory.getLogger(JsonTemplatingFunctions.class);
 
     private final Provider<Context> contextProvider;
+    private final DamTemplatingFunctions damTemplatingFunctions;
 
     @Inject
-    public JsonTemplatingFunctions(final Provider<Context> contextProvider) {
+    public JsonTemplatingFunctions(final Provider<Context> contextProvider, final DamTemplatingFunctions damTemplatingFunctions) {
         this.contextProvider = contextProvider;
+        this.damTemplatingFunctions = damTemplatingFunctions;
     }
 
     /**
-     * Old deprecated constructor.
-     *
-     * @deprecated since 1.0.7, use {@link #JsonTemplatingFunctions(Provider<Context>)} instead.
+     * @deprecated since 1.0.7, use {@link #JsonTemplatingFunctions(Provider, DamTemplatingFunctions)} instead.
      */
     @Deprecated
     public JsonTemplatingFunctions() {
-        this(new Provider<Context>() {
-            @Override
-            public Context get() {
-                return Components.getComponent(Context.class);
-            }
-        });
+        this(() -> Components.getComponent(Context.class), Components.getComponent(DamTemplatingFunctions.class));
     }
 
     /**
@@ -87,9 +83,9 @@ public class JsonTemplatingFunctions {
      * Will operate on passed in node.
      */
     public JsonBuilder from(Node node) {
-        JsonBuilder foo = new JsonBuilder();
-        foo.setNode(node);
-        return foo;
+        JsonBuilder jsonBuilder = new JsonBuilder(damTemplatingFunctions);
+        jsonBuilder.setNode(node);
+        return jsonBuilder;
     }
 
     /**
@@ -116,10 +112,10 @@ public class JsonTemplatingFunctions {
      * Will skip current node, but iterate over all children of it instead.
      */
     public JsonBuilder fromChildNodesOf(Node node) {
-        JsonBuilder foo = new JsonBuilder();
-        foo.setNode(node);
-        foo.setChildrenOnly(true);
-        return foo;
+        JsonBuilder jsonBuilder = new JsonBuilder(damTemplatingFunctions);
+        jsonBuilder.setNode(node);
+        jsonBuilder.setChildrenOnly(true);
+        return jsonBuilder;
     }
 
     /**
@@ -133,10 +129,10 @@ public class JsonTemplatingFunctions {
      * Will operate on passed in node.
      */
     public JsonBuilder appendFrom(String json, Node node) {
-        JsonBuilder foo = new JsonBuilder();
-        foo.setNode(node);
-        foo.setJson(json);
-        return foo;
+        JsonBuilder jsonBuilder = new JsonBuilder(damTemplatingFunctions);
+        jsonBuilder.setNode(node);
+        jsonBuilder.setJson(json);
+        return jsonBuilder;
     }
 
 }

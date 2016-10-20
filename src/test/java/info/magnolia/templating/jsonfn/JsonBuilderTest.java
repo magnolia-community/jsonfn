@@ -51,6 +51,7 @@ import info.magnolia.cms.i18n.DefaultI18nContentSupport;
 import info.magnolia.cms.i18n.I18nContentSupport;
 import info.magnolia.context.Context;
 import info.magnolia.context.MgnlContext;
+import info.magnolia.dam.templating.functions.DamTemplatingFunctions;
 import info.magnolia.jcr.util.NodeTypeTemplateUtil;
 import info.magnolia.jcr.util.NodeTypes;
 import info.magnolia.jcr.util.PropertiesImportExport;
@@ -167,7 +168,7 @@ public class JsonBuilderTest extends RepositoryTestCase {
         catSession.save();
         ComponentsTestUtil.setInstance(I18nContentSupport.class, new DefaultI18nContentSupport());
 
-        templatingFunctions = new JsonTemplatingFunctions(GuiceUtils.providerForInstance(context));
+        templatingFunctions = new JsonTemplatingFunctions(GuiceUtils.providerForInstance(context), mock(DamTemplatingFunctions.class));
     }
 
     /**

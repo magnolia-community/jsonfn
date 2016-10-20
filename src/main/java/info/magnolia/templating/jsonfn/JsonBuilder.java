@@ -38,10 +38,10 @@ import static info.magnolia.context.MgnlContext.getJCRSession;
 import static info.magnolia.jcr.util.PropertyUtil.*;
 import static info.magnolia.templating.jsonfn.Java8Util.*;
 
+import info.magnolia.dam.templating.functions.DamTemplatingFunctions;
 import info.magnolia.jcr.util.ContentMap;
 import info.magnolia.jcr.wrapper.I18nNodeWrapper;
 import info.magnolia.link.LinkUtil;
-import info.magnolia.objectfactory.Components;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -128,7 +128,14 @@ public class JsonBuilder implements Cloneable {
     private Map<String, MultiExpand> expandsMulti = new LinkedHashMap<>();
     private final Map<String, JsonNode> customInserts = new HashMap<>();
 
-    protected JsonBuilder() {
+    private final DamTemplatingFunctions damTemplatingFunctions;
+
+    protected JsonBuilder(final DamTemplatingFunctions damTemplatingFunctions) {
+        this.damTemplatingFunctions = damTemplatingFunctions;
+    }
+
+    protected DamTemplatingFunctions getDamTemplatingFunctions() {
+        return this.damTemplatingFunctions;
     }
 
     protected void setNode(Node node) {
@@ -699,11 +706,8 @@ public class JsonBuilder implements Cloneable {
 
         private Object generateRenditionLink(String rendition, Node node) {
             try {
-                Class<?> clazz = Class.forName("info.magnolia.dam.templating.functions.DamTemplatingFunctions");
-                Method dammethod = clazz.getMethod("getAssetLink", String.class, String.class);
-                Object damfn = Components.newInstance(clazz);
-                return dammethod.invoke(damfn, "jcr:" + node.getIdentifier(), rendition);
-            } catch (RepositoryException | ClassNotFoundException | NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+                return config.getDamTemplatingFunctions().getAssetLink("jcr:" + node.getIdentifier(), rendition);
+            } catch (RepositoryException e) {
                 log.debug("Failed to retrieve rendition {} for {} with {}", rendition, node, e.getMessage(), e);
             }
             return null;
@@ -713,13 +717,9 @@ public class JsonBuilder implements Cloneable {
             try {
                 try {
                     if (method.getName().equals("createAbsoluteLink") && node.getPrimaryNodeType().getName().equals("mgnl:asset")) {
-                        Class<?> clazz = this.getClass().forName("info.magnolia.dam.templating.functions.DamTemplatingFunctions");
-                        Method dammethod = clazz.getMethod("getAssetLink", String.class);
-                        Object damfn = clazz.newInstance();
-                        return dammethod.invoke(damfn, "jcr:" + node.getIdentifier());
-
+                        return config.getDamTemplatingFunctions().getAssetLink("jcr:" + node.getIdentifier());
                     }
-                } catch (RepositoryException | ClassNotFoundException | InstantiationException | NoSuchMethodException | SecurityException e) {
+                } catch (RepositoryException e) {
                     // bad luck we handle it the usual way
                     log.debug("Failed to create link using {} for {} with {}", method, node, e.getMessage(), e);
                 }
