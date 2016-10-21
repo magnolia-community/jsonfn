@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE module SYSTEM "module.dtd" >
 <module>
-  <name>magnolia-jsonfn</name>
+  <name>jsonfn</name>
   <displayName>${project.name}</displayName>
   <description>${project.description}</description>
   <version>${project.version}</version>
