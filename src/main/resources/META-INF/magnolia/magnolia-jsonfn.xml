@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE module SYSTEM "module.dtd" >
 <module>
-  <name>magnolia-jsonfn</name>
+  <name>jsonfn</name>
   <displayName>${project.name}</displayName>
   <description>${project.description}</description>
   <version>${project.version}</version>
@@ -17,11 +17,15 @@
   <dependencies>
     <dependency>
       <name>core</name>
-      <version>5.0/*</version>
+      <version>${magnoliaVersion}/*</version>
     </dependency>
     <dependency>
       <name>rendering</name>
-      <version>5.0/*</version>
+      <version>${magnoliaVersion}/*</version>
+    </dependency>
+    <dependency>
+      <name>dam-templating</name>
+      <version>${magnoliaDamVersion}/*</version>
     </dependency>
   </dependencies>
 </module>
