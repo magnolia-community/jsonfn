@@ -33,11 +33,8 @@
  */
 package info.magnolia.templating.jsonfn;
 
-import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -165,7 +162,7 @@ public class JsonBuilderTest extends RepositoryTestCase {
         nodeTypeManager.registerNodeType(type, true);
 
         catNode = catSession.getRootNode().addNode("foo", "category");
-        catNode.addNode("foobar", "mgnl:content");
+        catNode.addNode("foobar", NodeTypes.Content.NAME);
         catNode.setProperty("name", "myCategory");
         catSession.save();
         ComponentsTestUtil.setInstance(I18nContentSupport.class, new DefaultI18nContentSupport());
@@ -712,7 +709,7 @@ public class JsonBuilderTest extends RepositoryTestCase {
         //GIVEN
         Node node = session.getNode("/home/section2/article/mgnl:apex");
         node.setProperty("baz", catNode.getIdentifier());
-        node.addNode("blah", "mgnl:content");
+        node.addNode("blah", NodeTypes.Content.NAME);
 
         // WHEN
         String json = templatingFunctions.from(node).expand("baz", "category").add("name").add("baz['@name']").down(2).print();
@@ -732,11 +729,11 @@ public class JsonBuilderTest extends RepositoryTestCase {
     public void testChildrenAsArrayNoMatch() throws Exception {
         //GIVEN
         Node node = session.getNode("/home/section2/article");
-        Node multiParent = node.addNode("multiParent", "mgnl:content");
+        Node multiParent = node.addNode("multiParent", NodeTypes.Content.NAME);
         multiParent.setProperty("foo", "bar");
-        multiParent.addNode("testA", "mgnl:content");
-        multiParent.addNode("testB", "mgnl:content");
-        multiParent.addNode("testC", "mgnl:content");
+        multiParent.addNode("testA", NodeTypes.Content.NAME);
+        multiParent.addNode("testB", NodeTypes.Content.NAME);
+        multiParent.addNode("testC", NodeTypes.Content.NAME);
 
         //WHEN
         String noArray = templatingFunctions.from(node).add("name").down(2).print();
@@ -764,11 +761,11 @@ public class JsonBuilderTest extends RepositoryTestCase {
     public void testChildrenAsArrayMatch() throws Exception {
         //GIVEN
         Node node = session.getNode("/home/section2/article");
-        Node multiParent = node.addNode("multiParent", "mgnl:content");
+        Node multiParent = node.addNode("multiParent", NodeTypes.Content.NAME);
         multiParent.setProperty("foo", "bar");
-        multiParent.addNode("testA", "mgnl:content");
-        multiParent.addNode("testB", "mgnl:content");
-        multiParent.addNode("testC", "mgnl:content");
+        multiParent.addNode("testA", NodeTypes.Content.NAME);
+        multiParent.addNode("testB", NodeTypes.Content.NAME);
+        multiParent.addNode("testC", NodeTypes.Content.NAME);
 
         //WHEN
         // check that the nodes matching the property (name) and value are included when present.
@@ -798,7 +795,7 @@ public class JsonBuilderTest extends RepositoryTestCase {
     public void testInsertCustom() throws Exception {
         //GIVEN
         Node node = session.getNode("/home/section2/article");
-        Node customContainer = node.addNode("customContainer", "mgnl:content");
+        Node customContainer = node.addNode("customContainer", NodeTypes.Content.NAME);
         customContainer.setProperty("aa", "bb");
 
         String myArray = "[ \"one\", \"two\", \"three\" ]";
@@ -827,7 +824,7 @@ public class JsonBuilderTest extends RepositoryTestCase {
     public void testMultiExpandNodePropertyListing() throws Exception {
         //GIVEN
         Node node = session.getNode("/home/section2/article/mgnl:apex");
-        node.addNode("blah", "mgnl:content");
+        node.addNode("blah", NodeTypes.Content.NAME);
         catNode.setProperty("fooId", "123");
         Session catSession = catNode.getSession();
         Node cn2 = catSession.getRootNode().addNode("foo2name", "category");
@@ -864,7 +861,7 @@ public class JsonBuilderTest extends RepositoryTestCase {
     public void testMultiExpandNodeMultiPropertiesListing() throws Exception {
         //GIVEN
         Node node = session.getNode("/home/section2/article/mgnl:apex");
-        node.addNode("blah", "mgnl:content");
+        node.addNode("blah", NodeTypes.Content.NAME);
         catNode.setProperty("fooId", "123");
         Session catSession = catNode.getSession();
         Node cn2 = catSession.getRootNode().addNode("foo2name", "category");
@@ -904,7 +901,7 @@ public class JsonBuilderTest extends RepositoryTestCase {
     public void testMultiExpandNodeMultiPropertiesListingFromMultiValueProperty() throws Exception {
         //GIVEN
         Node node = session.getNode("/home/section2/article/mgnl:apex");
-        node.addNode("blah", "mgnl:content");
+        node.addNode("blah", NodeTypes.Content.NAME);
         catNode.setProperty("fooId", "123");
         Session catSession = catNode.getSession();
         Node cn2 = catSession.getRootNode().addNode("foo2name", "category");
@@ -957,12 +954,11 @@ public class JsonBuilderTest extends RepositoryTestCase {
      */
     @Test
     public void testSubNodePropertyListingWithExclusionOfParent() throws Exception {
-        Session session = MgnlContext.getInstance().getJCRSession("website");
         // GIVEN
         Node node = session.getNode("/home/section2/article/mgnl:apex/alias");
-        node.addNode("tab0","mgnl:content");
-        node.addNode("tab1","mgnl:content");
-        node.addNode("tab2","mgnl:content");
+        node.addNode("tab0", NodeTypes.Content.NAME);
+        node.addNode("tab1", NodeTypes.Content.NAME);
+        node.addNode("tab2", NodeTypes.Content.NAME);
         session.save();
 
         // WHEN
@@ -984,7 +980,7 @@ public class JsonBuilderTest extends RepositoryTestCase {
         //GIVEN
         Node node = session.getNode("/home/section2/article/mgnl:apex");
         node.setProperty("baz", catNode.getIdentifier());
-        node.addNode("blah", "mgnl:content");
+        node.addNode("blah", NodeTypes.Content.NAME);
         session.save();
 
         // WHEN
