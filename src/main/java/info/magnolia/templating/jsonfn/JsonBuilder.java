@@ -40,6 +40,8 @@ import static info.magnolia.templating.jsonfn.Java8Util.*;
 
 import info.magnolia.dam.templating.functions.DamTemplatingFunctions;
 import info.magnolia.jcr.util.ContentMap;
+import info.magnolia.jcr.util.NodeTypes;
+import info.magnolia.jcr.util.NodeUtil;
 import info.magnolia.jcr.wrapper.I18nNodeWrapper;
 import info.magnolia.link.LinkUtil;
 
@@ -121,12 +123,16 @@ public class JsonBuilder implements Cloneable {
     private boolean wrapForI18n;
     private String readNodeTypes = "^(?!rep:).*$";
     private String allowOnlyNodeTypes = ".*";
+
+    private boolean allowDeleted = false;
+
     private Map<Character, Character> masks = new LinkedHashMap<>();
     private Map<String, List<String>> subNodeSpecificProperties = new LinkedHashMap<>();
     private boolean escapeBackslash;
     private final Map<String, String> childrenArrayCandidates = new LinkedHashMap<>();
     private Map<String, MultiExpand> expandsMulti = new LinkedHashMap<>();
     private final Map<String, JsonNode> customInserts = new HashMap<>();
+    private Map<Pattern, String> renames = new LinkedHashMap<>();
 
     private final DamTemplatingFunctions damTemplatingFunctions;
 
@@ -237,6 +243,11 @@ public class JsonBuilder implements Cloneable {
         return this;
     }
 
+    public JsonBuilder allowDeleted() {
+        allowDeleted = true;
+        return this;
+    }
+
     /**
      * Includes only specified properties. Use together with excludeAll().
      */
@@ -287,6 +298,11 @@ public class JsonBuilder implements Cloneable {
         } catch (IOException e) {
             log.debug("Failed to parse custom JSON", e);
         }
+        return this;
+    }
+
+    public JsonBuilder renameKey(String replaceRegex, String replacement) {
+        this.renames.put(Pattern.compile(replaceRegex), replacement);
         return this;
     }
 
@@ -430,6 +446,7 @@ public class JsonBuilder implements Cloneable {
             clone.expands = new HashMap<>(clone.expands);
             clone.expandsMulti = new LinkedHashMap<>(clone.expandsMulti);
             clone.masks = new LinkedHashMap<>(clone.masks);
+            clone.renames = new LinkedHashMap<>(clone.renames);
             clone.subNodeSpecificProperties = new LinkedHashMap<>(clone.subNodeSpecificProperties);
             clone.referencingPropertyName = null;
             return clone;
@@ -446,7 +463,7 @@ public class JsonBuilder implements Cloneable {
         /**
          * Internal map of resolved properties.
          */
-        private final Map<String, Object> props = new HashMap<>();
+        private final Map<String, Object> props = new LinkedHashMap<>();
 
         /**
          * Represents getters of the node itself.
@@ -586,23 +603,31 @@ public class JsonBuilder implements Cloneable {
                     if (config.subNodeSpecificProperties.containsKey(node.getName())) {
                         includes.addAll(config.subNodeSpecificProperties.get(node.getName()));
                     }
+
+                    Stream<String> matchedRegex = getAllMatchedRegex(node.getName(), config.subNodeSpecificProperties.keySet());
+                    matchedRegex.forEach(match -> includes.addAll(config.subNodeSpecificProperties.get(match)));
+
                     if (config.subNodeSpecificProperties.containsKey(config.referencingPropertyName)) {
                         includes.addAll(config.subNodeSpecificProperties.get(config.referencingPropertyName));
                     }
+
+                    matchedRegex = getAllMatchedRegex(config.referencingPropertyName, config.subNodeSpecificProperties.keySet());
+                    matchedRegex.forEach(match -> includes.addAll(config.subNodeSpecificProperties.get(match)));
+
                     stream = asPropertyStream(properties)
                             .map(Java8Util::getName)
                             .filter(name -> matchesRegex(name, includes))
-                            .filter(name -> !matchesRegex(name, config.regexExcludes));
+                            .filter(name -> !matchesRegex(name, config.regexExcludes) && !matchesRegex(getName(node) + "'" + name + "'", config.regexExcludes));
 
                     // do not try to include binary data since we don't try to encode them either and jackson just blows w/o that
                     stream.filter(name -> getJCRPropertyType(getPropertyValueObject(node, name)) != PropertyType.BINARY)
                             .forEach(new PredicateSplitterConsumer<>(config::isExpandable,
-                                    expandableProperty -> props.put(maskChars(expandableProperty), expand(expandableProperty, node)),
-                                    flatProperty -> props.put(maskChars(flatProperty), getPropertyValueObject(node, flatProperty))));
+                                    expandableProperty -> props.put(renameAndMask(expandableProperty), expand(expandableProperty, node)),
+                                    flatProperty -> props.put(renameAndMask(flatProperty), getPropertyValueObject(node, flatProperty))));
 
                     asPropertyStream(node.getProperties())
                             .filter(this::hasCustomReplacement)
-                            .forEach(p -> props.put(maskChars(getName(p)), getCustomReplacement(p)));
+                            .forEach(p -> props.put(renameAndMask(getName(p)), getCustomReplacement(p)));
 
                     // merge multiexpands with use of temp copy to avoid CCME
                     HashMap<String, Object> propsClone = new HashMap<>(props);
@@ -613,13 +638,13 @@ public class JsonBuilder implements Cloneable {
                                     .collect(Collectors.toList())))
                             .map(entry -> new AbstractMap.SimpleEntry<>(entry.getKey(), flatten(entry.getValue())))
                             .filter(entry -> entry.getValue().size() > 0)
-                            .forEach(entry -> props.put(maskChars(entry.getKey()), entry.getValue()));
+                            .forEach(entry -> props.put(renameAndMask(entry.getKey()), entry.getValue()));
 
                     Stream<Entry<String, Method>> specialStream;
                     specialStream = specialProperties.entrySet().stream()
                             .filter(entry -> matchesRegex(entry.getKey(), includes))
-                            .filter(entry -> !matchesRegex(entry.getKey(), config.regexExcludes));
-                    specialStream.forEach(entry -> props.put(maskChars(entry.getKey()), invoke(entry.getValue(), node)));
+                            .filter(entry -> (!matchesRegex(entry.getKey(), config.regexExcludes) && !matchesRegex(getName(node) + "'" + entry.getKey() + "'", config.regexExcludes)));
+                    specialStream.forEach(entry -> props.put(renameAndMask(entry.getKey()), invoke(entry.getValue(), node)));
                     if (node.getPrimaryNodeType().getName().equals("mgnl:asset")) {
                         config.renditions.forEach(rendition -> props.put("@rendition_" + rendition, generateRenditionLink(rendition, node)));
                     }
@@ -630,7 +655,7 @@ public class JsonBuilder implements Cloneable {
                     asNodeStream(node.getNodes())
                             .filter(config::isSearchInNodeType)
                             .forEach(new PredicateSplitterConsumer<>(config::isOfAllowedDepthAndType,
-                                    allowedNode -> props.put(maskChars(getName(allowedNode)), getOutputSubtree(allowedNode)),
+                                    allowedNode -> props.put(renameAndMask(getName(allowedNode)), getOutputSubtree(allowedNode)),
                                     allowedParent -> props.putAll(this.getAllowedChildNodesPropertyMapsOf(allowedParent))));
                 }
 
@@ -682,7 +707,13 @@ public class JsonBuilder implements Cloneable {
             return new EntryableContentMap(config.cloneWith(node));
         }
 
-        private String maskChars(String name) {
+        private String renameAndMask(String name) {
+            for (Entry<Pattern, String> e : config.renames.entrySet()) {
+                if (e.getKey().matcher(name).matches()) {
+                    name = e.getValue();
+                    break;
+                }
+            }
             for (Entry<Character, Character> e : config.masks.entrySet()) {
                 name = name.replace(e.getKey(), e.getValue());
             }
@@ -695,7 +726,7 @@ public class JsonBuilder implements Cloneable {
                 asNodeStream(parent.getNodes())
                         .filter(config::isSearchInNodeType)
                         .forEach(new PredicateSplitterConsumer<>(config::isOfAllowedDepthAndType,
-                                allowedNode -> props.put(maskChars(getName(allowedNode)), new EntryableContentMap(config.cloneWith(allowedNode))),
+                                allowedNode -> props.put(renameAndMask(getName(allowedNode)), new EntryableContentMap(config.cloneWith(allowedNode))),
                                 allowedParent -> props.putAll(this.getAllowedChildNodesPropertyMapsOf(allowedParent))));
                 return props;
             } catch (RepositoryException e) {
@@ -793,17 +824,31 @@ public class JsonBuilder implements Cloneable {
                     } else {
                         expandedNode = session.getNodeByIdentifier(expandable);
                     }
-                    return mapToECMap(expandedNode, expandableProperty, config);
+                    if (config.allowDeleted || isNotDeleted(expandedNode)) {
+                        return mapToECMap(expandedNode, expandableProperty, config);
+                    } else {
+                        return null;
+                    }
                 } else {
                     String statement = "select * from [nt:base] where contains(" + escapeForQuery(targetName) + ",'" + escapeForQuery(expandable) + "')";
                     NodeIterator results = search(workspace, statement);
                     return asNodeStream(results)
+                            .filter(node -> config.allowDeleted || isNotDeleted(node))
                             .map(expanded -> mapToECMap(expanded, expandableProperty, config))
                             .collect(Collectors.toList());
                 }
             } catch (RepositoryException e) {
                 log.debug(e.getMessage(), e);
                 return null;
+            }
+        }
+
+        private boolean isNotDeleted(Node node) {
+            try {
+                boolean isDeleted = NodeUtil.hasMixin(node, NodeTypes.Deleted.NAME);
+                return !isDeleted;
+            } catch (RepositoryException e) {
+                throw new RuntimeException(String.format("Failed to check for deleted nodes because of %s.", e.getMessage()), e);
             }
         }
 
@@ -830,6 +875,13 @@ public class JsonBuilder implements Cloneable {
 
         private boolean matchesRegex(String test, Collection<String> regexList) {
             return !regexList.stream().noneMatch(test::matches);
+        }
+
+        private Stream<String> getAllMatchedRegex(String test, Collection<String> regexList) {
+            if (test == null) {
+                return Stream.empty();
+            }
+            return regexList.stream().filter(test::matches);
         }
     }
 

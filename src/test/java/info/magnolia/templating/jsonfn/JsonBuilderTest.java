@@ -33,15 +33,8 @@
  */
 package info.magnolia.templating.jsonfn;
 
-import static org.hamcrest.CoreMatchers.allOf;
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.endsWith;
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.CoreMatchers.startsWith;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -65,6 +58,10 @@ import info.magnolia.test.ComponentsTestUtil;
 import info.magnolia.test.RepositoryTestCase;
 
 import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
@@ -77,6 +74,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Before;
 import org.junit.Test;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class JsonBuilderTest extends RepositoryTestCase {
 
@@ -163,7 +162,7 @@ public class JsonBuilderTest extends RepositoryTestCase {
         nodeTypeManager.registerNodeType(type, true);
 
         catNode = catSession.getRootNode().addNode("foo", "category");
-        catNode.addNode("foobar", "mgnl:content");
+        catNode.addNode("foobar", NodeTypes.Content.NAME);
         catNode.setProperty("name", "myCategory");
         catSession.save();
         ComponentsTestUtil.setInstance(I18nContentSupport.class, new DefaultI18nContentSupport());
@@ -710,7 +709,7 @@ public class JsonBuilderTest extends RepositoryTestCase {
         //GIVEN
         Node node = session.getNode("/home/section2/article/mgnl:apex");
         node.setProperty("baz", catNode.getIdentifier());
-        node.addNode("blah", "mgnl:content");
+        node.addNode("blah", NodeTypes.Content.NAME);
 
         // WHEN
         String json = templatingFunctions.from(node).expand("baz", "category").add("name").add("baz['@name']").down(2).print();
@@ -730,11 +729,11 @@ public class JsonBuilderTest extends RepositoryTestCase {
     public void testChildrenAsArrayNoMatch() throws Exception {
         //GIVEN
         Node node = session.getNode("/home/section2/article");
-        Node multiParent = node.addNode("multiParent", "mgnl:content");
+        Node multiParent = node.addNode("multiParent", NodeTypes.Content.NAME);
         multiParent.setProperty("foo", "bar");
-        multiParent.addNode("testA", "mgnl:content");
-        multiParent.addNode("testB", "mgnl:content");
-        multiParent.addNode("testC", "mgnl:content");
+        multiParent.addNode("testA", NodeTypes.Content.NAME);
+        multiParent.addNode("testB", NodeTypes.Content.NAME);
+        multiParent.addNode("testC", NodeTypes.Content.NAME);
 
         //WHEN
         String noArray = templatingFunctions.from(node).add("name").down(2).print();
@@ -762,11 +761,11 @@ public class JsonBuilderTest extends RepositoryTestCase {
     public void testChildrenAsArrayMatch() throws Exception {
         //GIVEN
         Node node = session.getNode("/home/section2/article");
-        Node multiParent = node.addNode("multiParent", "mgnl:content");
+        Node multiParent = node.addNode("multiParent", NodeTypes.Content.NAME);
         multiParent.setProperty("foo", "bar");
-        multiParent.addNode("testA", "mgnl:content");
-        multiParent.addNode("testB", "mgnl:content");
-        multiParent.addNode("testC", "mgnl:content");
+        multiParent.addNode("testA", NodeTypes.Content.NAME);
+        multiParent.addNode("testB", NodeTypes.Content.NAME);
+        multiParent.addNode("testC", NodeTypes.Content.NAME);
 
         //WHEN
         // check that the nodes matching the property (name) and value are included when present.
@@ -785,9 +784,9 @@ public class JsonBuilderTest extends RepositoryTestCase {
                 + "    }\n"
                 + "  },\n"
                 + "  \"multiParent\" : {\n"
+                + "    \"testA\" : [ ],\n"
                 + "    \"testB\" : [ ],\n"
-                + "    \"testC\" : [ ],\n"
-                + "    \"testA\" : [ ]\n"
+                + "    \"testC\" : [ ]\n"
                 + "  }\n"
                 + "}", withArrayByValueRegex);
     }
@@ -796,7 +795,7 @@ public class JsonBuilderTest extends RepositoryTestCase {
     public void testInsertCustom() throws Exception {
         //GIVEN
         Node node = session.getNode("/home/section2/article");
-        Node customContainer = node.addNode("customContainer", "mgnl:content");
+        Node customContainer = node.addNode("customContainer", NodeTypes.Content.NAME);
         customContainer.setProperty("aa", "bb");
 
         String myArray = "[ \"one\", \"two\", \"three\" ]";
@@ -825,7 +824,7 @@ public class JsonBuilderTest extends RepositoryTestCase {
     public void testMultiExpandNodePropertyListing() throws Exception {
         //GIVEN
         Node node = session.getNode("/home/section2/article/mgnl:apex");
-        node.addNode("blah", "mgnl:content");
+        node.addNode("blah", NodeTypes.Content.NAME);
         catNode.setProperty("fooId", "123");
         Session catSession = catNode.getSession();
         Node cn2 = catSession.getRootNode().addNode("foo2name", "category");
@@ -862,7 +861,7 @@ public class JsonBuilderTest extends RepositoryTestCase {
     public void testMultiExpandNodeMultiPropertiesListing() throws Exception {
         //GIVEN
         Node node = session.getNode("/home/section2/article/mgnl:apex");
-        node.addNode("blah", "mgnl:content");
+        node.addNode("blah", NodeTypes.Content.NAME);
         catNode.setProperty("fooId", "123");
         Session catSession = catNode.getSession();
         Node cn2 = catSession.getRootNode().addNode("foo2name", "category");
@@ -902,7 +901,7 @@ public class JsonBuilderTest extends RepositoryTestCase {
     public void testMultiExpandNodeMultiPropertiesListingFromMultiValueProperty() throws Exception {
         //GIVEN
         Node node = session.getNode("/home/section2/article/mgnl:apex");
-        node.addNode("blah", "mgnl:content");
+        node.addNode("blah", NodeTypes.Content.NAME);
         catNode.setProperty("fooId", "123");
         Session catSession = catNode.getSession();
         Node cn2 = catSession.getRootNode().addNode("foo2name", "category");
@@ -932,4 +931,138 @@ public class JsonBuilderTest extends RepositoryTestCase {
         assertEquals(1, StringUtils.countMatches(json, "foo2name"));
         assertThat(json, endsWith("}"));
     }
+
+    @Test
+    public void nodeOrderIsPreserved() throws Exception {
+        //GIVEN
+        Node node = session.getRootNode().addNode("test");
+        Set<String> subNodes = new LinkedHashSet(Arrays.asList("test3", "test1", "test2"));
+        for (String subNode : subNodes) {
+            node.addNode(subNode);
+        }
+
+        // WHEN
+        String json = templatingFunctions.from(node).add("test(.+)['@path']").down(1).print();
+        Map<String, Object> jsonMap = new ObjectMapper().readValue(json, LinkedHashMap.class);
+
+        // THEN
+        assertEquals(jsonMap.keySet(), subNodes);
+    }
+
+    /**
+     * Lists specified properties only for sub nodes but not for the parent nodes.
+     */
+    @Test
+    public void testSubNodePropertyListingWithExclusionOfParent() throws Exception {
+        // GIVEN
+        Node node = session.getNode("/home/section2/article/mgnl:apex/alias");
+        node.addNode("tab0", NodeTypes.Content.NAME);
+        node.addNode("tab1", NodeTypes.Content.NAME);
+        node.addNode("tab2", NodeTypes.Content.NAME);
+        session.save();
+
+        // WHEN
+        String json = templatingFunctions.from(session.getNode("/home/section2/article/mgnl:apex/alias")).down(1).add( "tab(.+)['@id']").inline().print();
+
+        // THEN
+        assertThat(json, startsWith("{"));
+        assertThat(json, containsString("\"tab1\":{\"@id\""));
+        assertThat(json, not(containsString("},\"@id\":")));
+        assertThat(json, containsString("},\"tab2\":{\"@id\":"));
+        assertThat(json, endsWith("}"));
+    }
+
+    /**
+     * Lists and renames properties and nodes.
+     */
+    @Test
+    public void testExpandedNodePropertyListingWithRenames() throws Exception {
+        //GIVEN
+        Node node = session.getNode("/home/section2/article/mgnl:apex");
+        node.setProperty("baz", catNode.getIdentifier());
+        node.addNode("blah", NodeTypes.Content.NAME);
+        session.save();
+
+        // WHEN
+        String json = templatingFunctions.from(node).expand("baz", "category").renameKey("baz", "booz").renameKey("@name", "ren@name").renameKey("..me", "wasName").add("name").add("baz['@name']").down(2).print();
+
+        // THEN
+        assertThat(json, startsWith("{"));
+        assertThat(json, not(containsString("\"jcr:created\" : ")));
+        assertThat(json, not(containsString("\"ren@name\" : \"mgnl:apex\"")));
+        assertThat(json, not(containsString("\"ren@name\" : \"blah\"")));
+        assertThat(json, containsString("\"booz\" : {"));
+        assertThat(json, containsString("\"ren@name\" : \"foo\""));
+        assertThat(json, containsString("\"wasName\" : \"myCategory\""));
+        assertThat(json, endsWith("}"));
+    }
+
+    /**
+     * Lists specified properties only for parent nodes but not for the subnodes.
+     */
+    @Test
+    public void testSubNodeWithSamePropertyAsOneOfAncestors() throws Exception {
+        Session session = MgnlContext.getInstance().getJCRSession(RepositoryConstants.WEBSITE);
+
+        // GIVEN
+        Node node = session.getNode("/home/section2/article/mgnl:apex/alias");
+        node.setProperty("abstract", "foo");
+        Node child = node.addNode("linkInternal", NodeTypes.Content.NAME);
+        child.setProperty("abstract", "foo");
+
+        // WHEN
+        String json = templatingFunctions.from(session.getNode("/home/section2/article/mgnl:apex/alias")).down(3).add("alias['abstract']").exclude("linkInternal['abstract']").inline().print();
+
+        // THEN
+        assertThat(json, startsWith("{"));
+        assertThat(json, containsString("{\"abstract\":\"foo\"}"));
+        assertThat(json, endsWith("}"));
+    }
+
+    /**
+     * Lists specified properties only for parent nodes but not for the subnodes.
+     */
+    @Test
+    public void testSubNodeWithSystemPropertyNameAsOneOfAncestors() throws Exception {
+        Session session = MgnlContext.getInstance().getJCRSession(RepositoryConstants.WEBSITE);
+
+        // GIVEN
+        Node node = session.getNode("/home/section2/article/mgnl:apex/alias");
+        node.setProperty("abstract", "foo");
+        Node child = node.addNode("linkInternal", NodeTypes.Content.NAME);
+        child.setProperty("abstract", "foo");
+
+        // WHEN
+        String json = templatingFunctions.from(session.getNode("/home/section2/article/mgnl:apex/alias")).down(3).add("alias['@id']").exclude("linkInternal['@id']").inline().print();
+
+        // THEN
+        assertThat(json, startsWith("{"));
+        assertThat(json, containsString("{\"@id\":\""));
+        assertEquals(json.split("id").length, 2);
+        assertThat(json, endsWith("}"));
+    }
+
+    /**
+     * jsonfn.from(content).expand("baz", "category").print() when baz is deleted
+     *
+     * ==> { "foo" : "hahaha", "baz" : {"identifier" : "1234-123456-1234", "name" : "cat1"}, b: 1234, "bar" : "meh", ... }
+     */
+    @Test
+    public void testExpandDeleted() throws Exception {
+
+        // GIVEN
+        Node node = session.getNode("/home/section2/article/mgnl:apex");
+        catNode.addMixin(NodeTypes.Deleted.NAME);
+        node.setProperty("baz", catNode.getIdentifier());
+
+        // WHEN
+        String json = templatingFunctions.from(node).expand("baz", "category").add("@id").print();
+
+        // THEN
+        assertThat(json, startsWith("{"));
+        assertThat(json, containsString("\"baz\" : null"));
+        assertThat(json, not(containsString("" + catNode.getIdentifier())));
+        assertThat(json, endsWith("}"));
+    }
+
 }
