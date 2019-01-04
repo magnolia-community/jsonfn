@@ -8,7 +8,7 @@
 
   <groupId>info.magnolia.templating</groupId>
   <artifactId>magnolia-jsonfn</artifactId>
-  <version>1.0.8</version>
+  <version>1.0.9-SNAPSHOT</version>
   <packaging>jar</packaging>
   <name>Json Templating Functions Magnolia Module</name>
 
@@ -24,7 +24,7 @@
     <connection>scm:git:ssh://git@git.magnolia-cms.com/forge/magnolia-jsonfn.git</connection>
     <developerConnection>scm:git:ssh://git@git.magnolia-cms.com/forge/magnolia-jsonfn.git</developerConnection>
     <url>https://git.magnolia-cms.com/projects/FORGE/repos/magnolia-jsonfn/browse</url>
-    <tag>magnolia-jsonfn-1.0.8</tag>
+    <tag>HEAD</tag>
   </scm>
 
   <!-- Import dependency management section from main -->
