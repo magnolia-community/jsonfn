@@ -1,5 +1,7 @@
 # magnolia-json
 
+[![Build Status](https://travis-ci.com/magnolia-community/jsonfn.svg?branch=master)](https://travis-ci.com/magnolia-community/jsonfn) [![Magnolia compatibility](https://img.shields.io/badge/magnolia-5.4-brightgreen.svg)](https://www.magnolia-cms.com)
+
 jsonfn templating functions generate JSON from JCR nodes in any workspace. This allows you to generate highly customized JSON without writing custom Java classes.   
 
 The jsonfn templating functions originated in the neat-jsonfn module, hosted on GitHub and developed by [rah003](https://github.com/rah003 "Title").
