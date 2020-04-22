@@ -278,6 +278,33 @@ public class JsonBuilderTest extends RepositoryTestCase {
     }
 
     /**
+     * While some node id in expanded section points to a node that no longer exist, it should be silently ignored instead of leading to null in the results.
+     * jsonfn.from(content).expand("baz", "category").print()
+     *
+     * ==> { "foo" : "hahaha", "baz" : {"identifier" : "1234-123456-1234", "name" : "cat1"}, b: 1234, "bar" : "meh", ... }
+     */
+    @Test
+    public void testExpandMultivalueWithInvalidIdentifier() throws Exception {
+        // GIVEN
+        Node node = session.getNode("/home/section2/article/mgnl:apex");
+        Session catSession = catNode.getSession();
+        catSession.getWorkspace().copy(catNode.getPath(), "/othercat");
+        Node catNode2 = catSession.getNode("/othercat");
+        node.setProperty("baz", new String[]{catNode.getIdentifier(), catNode2.getIdentifier(),"123-not-exists-123"});
+
+        // WHEN
+        String json = templatingFunctions.from(node).expand("baz", "category").add("@id").print();
+
+        // THEN
+        assertThat(json, startsWith("{"));
+        // [{ == array of props ;)
+        assertThat(json, containsString("\"baz\" : [ {"));
+        assertThat(json, containsString("" + catNode.getIdentifier()));
+        assertThat(json, containsString("" + catNode2.getIdentifier()));
+        assertThat(json, not(containsString("null")));
+        assertThat(json, endsWith("}"));
+    }
+    /**
      * jsonfn.from(content).expand("baz", "category").print()
      *
      * ==> { "foo" : "hahaha", "baz" : {"identifier" : "1234-123456-1234", "name" : "cat1"}, b: 1234, "bar" : "meh", ... }

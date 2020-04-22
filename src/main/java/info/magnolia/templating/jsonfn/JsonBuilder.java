@@ -795,6 +795,7 @@ public class JsonBuilder implements Cloneable {
                     List<String> expandables = getValuesStringList(property.getValues());
                     return expandables.stream()
                             .map(expandable -> expandSingle(expandable, workspace, expandableProperty, targetName))
+                            .filter(it -> it != null)
                             .collect(Collectors.toList());
                 } else {
                     String expandable = getValueString(property);
