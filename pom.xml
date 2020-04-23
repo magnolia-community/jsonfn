@@ -21,8 +21,8 @@
   </properties>
 
   <scm>
-    <connection>scm:git:ssh://git@github.com:magnolia-community/jsonfn.git</connection>
-    <developerConnection>scm:gitssh://git@github.com:magnolia-community/jsonfn.git</developerConnection>
+    <connection>scm:git:https://git@github.com:magnolia-community/jsonfn.git</connection>
+    <developerConnection>scm:git:https://git@github.com:magnolia-community/jsonfn.git</developerConnection>
     <url>https://github.com/magnolia-community/jsonfn</url>
     <tag>HEAD</tag>
   </scm>
